@@ -6,11 +6,14 @@ import {
   AppShellMain,
   Avatar,
   Button,
+  Center,
   Container,
   Grid,
   GridCol,
   Group,
+  Loader,
   Paper,
+  ScrollArea,
   Stack,
   Text,
   TextInput,
@@ -22,6 +25,7 @@ import {
   SignedOut,
 } from "@clerk/nextjs";
 import { isNotEmpty, useForm } from "@mantine/form";
+import { useViewportSize } from "@mantine/hooks";
 
 export default function Home() {
   const user = useQuery(api.users.default);
@@ -31,12 +35,19 @@ export default function Home() {
     validate: { text: isNotEmpty() },
   });
   const getMessages = useQuery(api.messages.getMessages);
-  console.log({ getMessages });
+  const { height, width } = useViewportSize();
+
+  if (!getMessages)
+    return (
+      <Center h="100vh">
+        <Loader />
+      </Center>
+    );
 
   return (
     <AppShell>
       <AppShellMain>
-        <Container size="xs" py="xl">
+        <Container pos="relative" size="sm" py="xl">
           <Stack gap="xs">
             <Group justify="space-between">
               <Group>
@@ -54,6 +65,54 @@ export default function Home() {
                 </SignOutButton>
               </SignedIn>
             </Group>
+
+            <ScrollArea h={height - 175}>
+              <Paper withBorder p="xs">
+                <Stack>
+                  {getMessages?.map(
+                    ({ _id, text, pictureUrl, name, userId }) => (
+                      <Paper
+                        bg={
+                          userId === user?.tokenIdentifier ? "gray" : undefined
+                        }
+                        shadow="xs"
+                        ta={userId === user?.tokenIdentifier ? "end" : "start"}
+                        key={_id}
+                        withBorder
+                        p="xs"
+                      >
+                        <Stack
+                          align={
+                            userId === user?.tokenIdentifier ? "end" : "start"
+                          }
+                        >
+                          <Group gap="xs">
+                            <Avatar
+                              display={
+                                userId === user?.tokenIdentifier
+                                  ? "none"
+                                  : "block"
+                              }
+                              src={pictureUrl}
+                            />
+                            <Text>{name}</Text>
+                            <Avatar
+                              display={
+                                userId === user?.tokenIdentifier
+                                  ? "block"
+                                  : "none"
+                              }
+                              src={pictureUrl}
+                            />
+                          </Group>
+                          <Text>{text}</Text>
+                        </Stack>
+                      </Paper>
+                    )
+                  )}
+                </Stack>
+              </Paper>
+            </ScrollArea>
             <form onSubmit={onSubmit(({ text }) => createMessage({ text }))}>
               <Grid gutter="xs">
                 <GridCol span="auto">
@@ -64,26 +123,11 @@ export default function Home() {
                 </GridCol>
                 <GridCol span="content">
                   <Button type="submit" variant="light">
-                    Sent
+                    Send
                   </Button>
                 </GridCol>
               </Grid>
             </form>
-            <Paper withBorder p="xs">
-              <Stack>
-                {getMessages?.map(({ _id, text, pictureUrl, name }) => (
-                  <Paper key={_id} withBorder p="xs">
-                    <Stack>
-                      <Group gap="xs">
-                        <Avatar src={pictureUrl} />
-                        <Text>{name}</Text>
-                      </Group>
-                      <Text>{text}</Text>
-                    </Stack>
-                  </Paper>
-                ))}
-              </Stack>
-            </Paper>
           </Stack>
         </Container>
       </AppShellMain>

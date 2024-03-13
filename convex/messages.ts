@@ -19,7 +19,7 @@ export const createMessage = mutation({
 
 export const getMessages = query({
   args: {},
-  handler(ctx, args) {
-    return ctx.db.query("messages").collect();
+  handler(ctx) {
+    return ctx.db.query("messages").order("desc").collect();
   },
 });
